@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">  
+<html xmlns="http://www.w3.org/1999/xhtml">  
+<head>  
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">  
+<title>光标控制器</title>  
+<script type="text/javascript">
+function cursorControl(a){
+    this.element=a;
+    this.range=!1;
+    this.start=0;
+    this.init();
+};
+cursorControl.prototype={
+    init:function(){
+        var _that=this;
+        this.element.onkeyup=this.element.onmouseup=function(){
+            this.focus();
+            if(document.all){
+                _that.range=document.selection.createRange();
+            }else{
+                _that.start=_that.getStart();
+            }
+        }
+    },
+    getType:function(){
+        return Object.prototype.toString.call(this.element).match(/^\[object\s(.*)\]$/)[1];
+    },
+    getStart:function(){
+        if (this.element.selectionStart || this.element.selectionStart == '0'){  
+            return this.element.selectionStart; 
+        }else if (window.getSelection){  
+            var rng = window.getSelection().getRangeAt(0).cloneRange();  
+            rng.setStart(this.element,0);  
+            return rng.toString().length;
+        }
+    },
+    insertText:function(text){
+        this.element.focus();  
+        if(document.all){
+            document.selection.empty();  
+            this.range.text = text;  
+            this.range.collapse();  
+            this.range.select();
+        }  
+        else{
+            if(this.getType()=='HTMLDivElement'){
+                this.element.innerHTML=this.element.innerHTML.substr(0,this.start)+text+this.element.innerHTML.substr(this.start);
+            }else{
+                this.element.value=this.element.value.substr(0,this.start)+text+this.element.value.substr(this.start);
+            };
+        } 
+    },
+    getText:function(){
+        if (document.all){  
+            var r = document.selection.createRange();  
+            document.selection.empty();  
+            return r.text;  
+        }  
+        else{  
+            if (this.element.selectionStart || this.element.selectionStart == '0'){
+                var text=this.getType()=='HTMLDivElement'?this.element.innerHTML:this.element.value;
+                return text.substring(this.element.selectionStart,this.element.selectionEnd); 
+            } 
+            else if (window.getSelection){  
+                return window.getSelection().toString()
+            };  
+        }  
+    }
+};
+var c1,c2;
+window.onload=function(){
+    c1=new cursorControl(document.getElementById('text'));
+    c2=new cursorControl(document.getElementById('editdiv'));
+};
+function fn1(str){
+    c1.insertText(str);
+};
+function fn2(str){
+    c2.insertText(str);
+};
+function fn3(){
+    alert(c1.getText());
+};
+function fn4(){
+    alert(c2.getText());
+}     
+</script>  
+</head>  
+<body>  
+    <input type = "button" value = "插入字符串 {文本1}" onclick="fn1('{文本1}');"/><input type = "button" value = "获取选中的文本" onclick="fn3();"/><br />  <br />
+    <textarea id="text" cols="50" rows="5">这里是文本框</textarea><br /><br />  
+    <input type = "button" value = "插入字符串 {文本2}" onclick="fn2('{文本2}');"/> <input type = "button" value = "获取选中的文本" onclick="fn4();"/><br />  <br /> 
+    <div id="editdiv" contentEditable="true">这里是一个可编辑层</div><br />     
+</body>  
+</html>
